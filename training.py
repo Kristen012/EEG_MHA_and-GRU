@@ -63,7 +63,7 @@ if __name__ == "__main__":
 
     # Provide the path of the dataset
     # which is split already to train, val, test (split_data folder)
-    data_folder = 'PATH_TO_TRAINING_DATA_FOLDER/split_data'
+    data_folder = 'PATH_TO_TRAINING_DATA_FOLDER'
 
     # The name of the current training run (a respective folder to save the model checkpoint, the training logs, and evaluation results will be created)
     train_run_name = 'TRAIN_RUN_NAME'

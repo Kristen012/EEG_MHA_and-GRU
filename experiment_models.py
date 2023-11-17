@@ -369,6 +369,7 @@ def eeg_mha_dc_speech_gru_dc_model(
     # Gated Recurrent Unit
     gru_model = tf.keras.layers.GRU(env_input_dimension, return_sequences=True)
     env_proj_list = [gru_model(st) for st in stimuli_input]
+    # print("env_proj_list: ", env_proj_list)
     # env_proj_1 = gru_model(stimuli_input)
     # env_proj_2 = gru_model(env2)
 
@@ -391,10 +392,10 @@ def eeg_mha_dc_speech_gru_dc_model(
             strides=1,
             activation=activations[layer_index],
         )
-        print("eeg_proj_1", eeg_proj_1.shape)
-        print("env_proj_list_0", env_proj_list[0].shape)
-        print("env_proj_list_1", env_proj_list[1].shape)
-        env_proj_list = [env_proj_layer(env_proj_list) for env_proj_list in stimuli_proj]
+        # print("eeg_proj_1", eeg_proj_1.shape)
+        # print("env_proj_list_0", env_proj_list[0].shape)
+        # print("env_proj_list_1", env_proj_list[1].shape)
+        env_proj_list = [env_proj_layer(env_proj_list) for env_proj_list in env_proj_list]
 
         # env_proj_1 = env_proj_layer(env_proj_1)
         # env_proj_2 = env_proj_layer(env_proj_2)
