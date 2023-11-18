@@ -254,8 +254,6 @@ def eeg_mha_dc_speech_gru_dc_model(
             strides=1,
             activation=activations[layer_index],
         )
-        # Wait for check
-        # env_proj_1 = env_proj_layer(env_proj_1)
         stimuli_proj = [env_proj_layer(stimulus_proj) for stimulus_proj in stimuli_proj]
 
     # Comparison
