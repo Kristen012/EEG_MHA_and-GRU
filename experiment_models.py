@@ -24,6 +24,18 @@ class TransformerBlock(tf.keras.layers.Layer):
         ffn_output = self.dropout2(ffn_output, training=training)
         out = self.layernorm2(out1 + ffn_output)
         return out
+    
+    def get_config(self):
+        config = super(TransformerBlock, self).get_config().copy()
+        config.update({
+            'att': self.att,
+            'ffn': self.ffn,
+            'layernorm1': self.layernorm1,
+            'layernorm2': self.layernorm2,
+            'dropout1': self.dropout1,
+            'dropout2': self.dropout2
+        })
+        return config
 
 
 #### Baseline model ####
