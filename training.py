@@ -8,10 +8,9 @@ import tensorflow as tf
 # (un)comment the desired model(s)
 #from experiment_models import dilation_model                 # Baseline model
 #from experiment_models import eeg_mha_dc_speech_dc_model     # MHA+DC for EEG and DC for speech stimulus
-from experiment_models import eeg_mha_dc_speech_gru_dc_model # MHA+DC for EEG and GRU+DC for speech stimulus
-
+from experiment_models import eeg_mha_dc_speech_gru_dc_model, TransformerBlock # MHA+DC for EEG and GRU+DC for speech stimulus
+from EEGNet import EEGNet
 from dataset_generator import DataGenerator, batch_equalizer_fn, create_tf_dataset
-
 def evaluate_model(model, test_dict):
     """Evaluate a model.
 
@@ -63,12 +62,12 @@ if __name__ == "__main__":
     epochs = 100 #100
     patience = 6  #Stops training after 6 epochs without improvements
     lr_decay_patience = 2 #Decrease learning rate after x epochs without improvements
-    batch_size = 64
+    batch_size = 32
     only_evaluate = False
     number_mismatch = 4 # or 4
 
     training_log_filename = "training_log_{}_{}.csv".format(number_mismatch, window_length_s)
-    results_filename = 'eval.json'
+    # results_filename = 'eval.json'
 
 
     # Get the path to the config file
@@ -76,7 +75,7 @@ if __name__ == "__main__":
 
     # Provide the path of the dataset
     # which is split already to train, val, test (split_data folder)
-    data_folder = 'PATH_TO_TRAINING_DATA_FOLDER'
+    data_folder = 'split_data'
 
     # The name of the current training run (a respective folder to save the model checkpoint, the training logs, and evaluation results will be created)
     train_run_name = 'TRAIN_RUN_NAME'
@@ -87,23 +86,25 @@ if __name__ == "__main__":
   
     # uncomment if you want to train with the mel spectrogram stimulus representation
     stimulus_features = ["mel"]
-    stimulus_dimension = 10
+    stimulus_dimension = 28
 
     features = ["eeg"] + stimulus_features
 
     # Create a directory to store (intermediate) results
-    results_folder = os.path.join(experiments_folder, "results_dilated_convolutional_model_{}_MM_{}_s_{}".format(number_mismatch, window_length_s, stimulus_features[0]))
+    results_folder = os.path.join(experiments_folder, "results_dilated_convolutional_model_three_head_{}_MM_{}_s_{}".format(number_mismatch, window_length_s, stimulus_features[0]))
     os.makedirs(results_folder, exist_ok=True)
 
     # create model - (un)comment the desired model(s)
     #model = dilation_model(time_window=window_length, eeg_input_dimension=64, env_input_dimension=stimulus_dimension)                 # Baseline model
     #model = eeg_mha_dc_speech_dc_model(time_window=window_length, eeg_input_dimension=64, env_input_dimension=stimulus_dimension)     # MHA+DC for EEG and DC for speech stimulus
     model = eeg_mha_dc_speech_gru_dc_model(time_window=window_length, eeg_input_dimension=64, env_input_dimension=stimulus_dimension, num_mismatched_segments = number_mismatch) # MHA+DC for EEG and GRU+DC for speech stimulus
-
+    # model = EEGNet(time_window=window_length, eeg_input_dimension=64, env_input_dimension=stimulus_dimension, num_mismatched_segments = number_mismatch)
+    # tf.keras.utils.register_keras_serializable(TransformerBlock)
+    
     model_path = os.path.join(results_folder, "model_{}_MM_{}_s_{}.h5".format(number_mismatch, window_length_s, stimulus_features[0]))
 
     if only_evaluate:
-        model = tf.keras.models.load_model(model_path)
+        model = tf.keras.models.load_model(model_path, custom_objects={"TransformerBlock": TransformerBlock})
 
     else:
         train_files = [x for x in glob.glob(os.path.join(data_folder, "train_-_*")) if os.path.basename(x).split("_-_")[-1].split(".")[0] in features]
@@ -140,24 +141,39 @@ if __name__ == "__main__":
                 tf.keras.callbacks.EarlyStopping(patience=patience, restore_best_weights=True),
             ],
         )
+    
+    test_window_lengths = [3,5]
+    number_mismatch_test = [2,3,4, 8]
+    for number_mismatch in number_mismatch_test:
+        for window_length_s in test_window_lengths:
+            window_length = window_length_s * 64
+            results_filename = 'eval_{}_{}_s.json'.format(number_mismatch, window_length_s)
 
-    # Evaluate the model on test set
-    # Create a dataset generator for each test subject
-    # test_files = [x for x in glob.glob(os.path.join(data_folder, "test_-_*")) if os.path.basename(x).split("_-_")[-1].split(".")[0] in features]
-    # # Get all different subjects from the test set
-    # subjects = list(set([os.path.basename(x).split("_-_")[1] for x in test_files]))
-    # datasets_test = {}
-    # # Create a generator for each subject
-    # for sub in subjects:
-    #     files_test_sub = [f for f in test_files if sub in os.path.basename(f)]
-    #     test_generator = MatchMismatchDataGenerator(files_test_sub, window_length, spacing=spacing)
-    #     datasets_test[sub] = create_tf_dataset(test_generator, window_length, default_batch_equalizer_fn, hop_length, 1,)
+            model = eeg_mha_dc_speech_gru_dc_model(time_window=window_length, eeg_input_dimension=64,
+                                   env_input_dimension=stimulus_dimension, num_mismatched_segments=number_mismatch)
 
-    # # Evaluate the model
-    # evaluation = evaluate_model(model, datasets_test)
+            model.load_weights(model_path)
+            # Evaluate the model on test set
+            # Create a dataset generator for each test subject
+            test_files = [x for x in glob.glob(os.path.join(data_folder, "test_-_*")) if
+                          os.path.basename(x).split("_-_")[-1].split(".")[0] in features]
+            # Get all different subjects from the test set
+            subjects = list(set([os.path.basename(x).split("_-_")[1] for x in test_files]))
+            datasets_test = {}
+            # Create a generator for each subject
+            for sub in subjects:
+                files_test_sub = [f for f in test_files if sub in os.path.basename(f)]
+                test_generator = DataGenerator(files_test_sub, window_length)
+                datasets_test[sub] = create_tf_dataset(test_generator, window_length, batch_equalizer_fn,
+                                                       hop_length, batch_size=1,
+                                                       number_mismatch=number_mismatch,
+                                                       data_types=(tf.float32, tf.float32),
+                                                       feature_dims=(64, stimulus_dimension))
 
-    # # We can save our results in a json encoded file
-    # results_path = os.path.join(results_folder, results_filename)
-    # with open(results_path, "w") as fp:
-    #     json.dump(evaluation, fp)
-    # logging.info(f"Results saved at {results_path}")
+            evaluation = evaluate_model(model, datasets_test)
+
+            # We can save our results in a json encoded file
+            results_path = os.path.join(results_folder, results_filename)
+            with open(results_path, "w") as fp:
+                json.dump(evaluation, fp)
+            logging.info(f"Results saved at {results_path}")
