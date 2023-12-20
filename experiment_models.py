@@ -312,7 +312,6 @@ def eeg_mha_dc_speech_gru_dc_model(
     dilation_filters=16,
     activation="relu",
     compile=True,
-    # inputs=tuple(),
     num_mismatched_segments=4
 ):
     """Convolutional dilation model.
@@ -371,7 +370,7 @@ def eeg_mha_dc_speech_gru_dc_model(
     all_inputs.extend(stimuli_input)
 
 
-    stimuli_proj = [x for x in stimuli_input]
+    # stimuli_proj = [x for x in stimuli_input]
 
     # Activations to apply
     if isinstance(activation, str):
@@ -402,6 +401,7 @@ def eeg_mha_dc_speech_gru_dc_model(
             strides=1,
             activation=activations[layer_index],
         )(eeg_proj_1)
+        eeg_proj_1 = tf.keras.layers.BatchNormalization()(eeg_proj_1)
 
         # Dilation on envelope data, share weights
         env_proj_layer = tf.keras.layers.Conv1D(
@@ -422,9 +422,6 @@ def eeg_mha_dc_speech_gru_dc_model(
     cos_proj = [linear_proj_sim(tf.keras.layers.Flatten()(cos_i)) for cos_i in cos]
 
     # Classification
-    # out = tf.keras.layers.Dense(1, activation="sigmoid")(
-    #     tf.keras.layers.Flatten()(tf.keras.layers.Concatenate()([cos1, cos2]))
-    # )
     out = tf.keras.activations.softmax((tf.keras.layers.Concatenate()(cos_proj)))
 
 

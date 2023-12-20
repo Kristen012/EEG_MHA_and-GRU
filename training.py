@@ -62,7 +62,7 @@ if __name__ == "__main__":
     epochs = 100 #100
     patience = 6  #Stops training after 6 epochs without improvements
     lr_decay_patience = 2 #Decrease learning rate after x epochs without improvements
-    batch_size = 32
+    batch_size = 64
     only_evaluate = False
     number_mismatch = 4 # or 4
 
@@ -86,12 +86,12 @@ if __name__ == "__main__":
   
     # uncomment if you want to train with the mel spectrogram stimulus representation
     stimulus_features = ["mel"]
-    stimulus_dimension = 28
+    stimulus_dimension = 10
 
     features = ["eeg"] + stimulus_features
 
     # Create a directory to store (intermediate) results
-    results_folder = os.path.join(experiments_folder, "results_dilated_convolutional_model_three_head_{}_MM_{}_s_{}".format(number_mismatch, window_length_s, stimulus_features[0]))
+    results_folder = os.path.join(experiments_folder, "results_dilated_convolutional_model_bn_{}_MM_{}_s_{}".format(number_mismatch, window_length_s, stimulus_features[0]))
     os.makedirs(results_folder, exist_ok=True)
 
     # create model - (un)comment the desired model(s)
