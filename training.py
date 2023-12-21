@@ -91,7 +91,7 @@ if __name__ == "__main__":
     features = ["eeg"] + stimulus_features
 
     # Create a directory to store (intermediate) results
-    results_folder = os.path.join(experiments_folder, "results_dilated_convolutional_model_bn_{}_MM_{}_s_{}".format(number_mismatch, window_length_s, stimulus_features[0]))
+    results_folder = os.path.join(experiments_folder, "results_dilated_convolutional_model_bn2_{}_MM_{}_s_{}".format(number_mismatch, window_length_s, stimulus_features[0]))
     os.makedirs(results_folder, exist_ok=True)
 
     # create model - (un)comment the desired model(s)

@@ -412,6 +412,8 @@ def eeg_mha_dc_speech_gru_dc_model(
             activation=activations[layer_index],
         )
         env_proj_list = [env_proj_layer(env_proj_list) for env_proj_list in env_proj_list]
+        env_proj_layer = tf.keras.layers.BatchNormalization()
+        env_proj_list = [env_proj_layer(env_proj_list) for env_proj_list in env_proj_list]
 
 
     # Comparison
