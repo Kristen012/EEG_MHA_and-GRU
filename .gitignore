@@ -1,2 +1,4 @@
 PATH_TO_TRAINING_DATA_FOLDER/
 __pycache__/
+split_data/
+test_folder/

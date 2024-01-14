@@ -1,11 +1,17 @@
 """Different model architectures."""
 
 import tensorflow as tf
+from tensorflow import keras
 
 # Multi-Head Attention block
+
+# @keras.saving.register_keras_serializable
 class TransformerBlock(tf.keras.layers.Layer):
-    def __init__(self,  embed_dim, num_heads, ff_dim):
-        super(TransformerBlock, self).__init__()
+    def __init__(self, embed_dim=64, num_heads=2, ff_dim=32, trainable=True, **kwargs):
+        super(TransformerBlock, self).__init__(**kwargs)
+        self.embed_dim = embed_dim
+        self.num_heads = num_heads
+        self.ff_dim = ff_dim
         self.att = tf.keras.layers.MultiHeadAttention(num_heads=num_heads, key_dim=embed_dim)
         self.ffn = tf.keras.Sequential([tf.keras.layers.Dense(ff_dim, activation="relu"), tf.keras.layers.Dense(embed_dim), ])
         self.layernorm1 = tf.keras.layers.LayerNormalization(epsilon=1e-6)
@@ -24,18 +30,16 @@ class TransformerBlock(tf.keras.layers.Layer):
         ffn_output = self.dropout2(ffn_output, training=training)
         out = self.layernorm2(out1 + ffn_output)
         return out
-    
     def get_config(self):
-        config = super(TransformerBlock, self).get_config().copy()
+        config = super(TransformerBlock, self).get_config()
         config.update({
-            'att': self.att,
-            'ffn': self.ffn,
-            'layernorm1': self.layernorm1,
-            'layernorm2': self.layernorm2,
-            'dropout1': self.dropout1,
-            'dropout2': self.dropout2
+            'embed_dim': self.embed_dim,
+            'num_heads': self.num_heads,
+            'ff_dim': self.ff_dim,
         })
+        # return {**config, 'embed_dim': self.embed_dim, 'num_heads': self.num_heads, 'ff_dim': self.ff_dim}
         return config
+        
 
 
 #### Baseline model ####
@@ -304,11 +308,11 @@ def eeg_mha_dc_speech_gru_dc_model(
     env_input_dimension=1,
     layers=3,
     kernel_size=3,
+    spatial_filters=8,
     dilation_filters=16,
     activation="relu",
     compile=True,
-    # inputs=tuple(),
-    num_mismatched_segments=2
+    num_mismatched_segments=4
 ):
     """Convolutional dilation model.
 
@@ -366,7 +370,7 @@ def eeg_mha_dc_speech_gru_dc_model(
     all_inputs.extend(stimuli_input)
 
 
-    stimuli_proj = [x for x in stimuli_input]
+    # stimuli_proj = [x for x in stimuli_input]
 
     # Activations to apply
     if isinstance(activation, str):
@@ -374,16 +378,18 @@ def eeg_mha_dc_speech_gru_dc_model(
     else:
         activations = activation
 
+    # Spatial convolution
+    # eeg_proj_1 = tf.keras.layers.Conv1D(spatial_filters, kernel_size=1)(eeg)
+
     # Multi-Head Attention
     transformer_block_1 = TransformerBlock(embed_dim=eeg_input_dimension, num_heads=2, ff_dim=32)
+    # mhsa = tf.keras.layers.MultiHeadAttention(num_heads=3, key_dim=eeg_input_dimension)
+    # eeg_proj_1 = mhsa(eeg, eeg)
     eeg_proj_1 = transformer_block_1(eeg)
 
     # Gated Recurrent Unit
     gru_model = tf.keras.layers.GRU(env_input_dimension, return_sequences=True)
     env_proj_list = [gru_model(st) for st in stimuli_input]
-    print("env_proj_list: ", env_proj_list)
-    # env_proj_1 = gru_model(stimuli_input)
-    # env_proj_2 = gru_model(env2)
 
     # Construct dilation layers
     for layer_index in range(layers):
@@ -395,6 +401,7 @@ def eeg_mha_dc_speech_gru_dc_model(
             strides=1,
             activation=activations[layer_index],
         )(eeg_proj_1)
+        eeg_proj_1 = tf.keras.layers.BatchNormalization()(eeg_proj_1)
 
         # Dilation on envelope data, share weights
         env_proj_layer = tf.keras.layers.Conv1D(
@@ -404,17 +411,12 @@ def eeg_mha_dc_speech_gru_dc_model(
             strides=1,
             activation=activations[layer_index],
         )
-        # print("eeg_proj_1", eeg_proj_1.shape)
-        # print("env_proj_list_0", env_proj_list[0].shape)
-        # print("env_proj_list_1", env_proj_list[1].shape)
+        env_proj_list = [env_proj_layer(env_proj_list) for env_proj_list in env_proj_list]
+        env_proj_layer = tf.keras.layers.BatchNormalization()
         env_proj_list = [env_proj_layer(env_proj_list) for env_proj_list in env_proj_list]
 
-        # env_proj_1 = env_proj_layer(env_proj_1)
-        # env_proj_2 = env_proj_layer(env_proj_2)
 
     # Comparison
-    # cos1 = tf.keras.layers.Dot(1, normalize=True)([eeg_proj_1, env_proj_1])
-    # cos2 = tf.keras.layers.Dot(1, normalize=True)([eeg_proj_1, env_proj_2])
     cos = [tf.keras.layers.Dot(1, normalize=True)([eeg_proj_1, env_proj_list]) for env_proj_list in env_proj_list]
 
     linear_proj_sim = tf.keras.layers.Dense(1, activation="linear")
@@ -422,9 +424,6 @@ def eeg_mha_dc_speech_gru_dc_model(
     cos_proj = [linear_proj_sim(tf.keras.layers.Flatten()(cos_i)) for cos_i in cos]
 
     # Classification
-    # out = tf.keras.layers.Dense(1, activation="sigmoid")(
-    #     tf.keras.layers.Flatten()(tf.keras.layers.Concatenate()([cos1, cos2]))
-    # )
     out = tf.keras.activations.softmax((tf.keras.layers.Concatenate()(cos_proj)))
 
 
