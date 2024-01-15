@@ -290,10 +290,10 @@ def eeg_mha_dc_speech_gru_dc_model(
 
 
     # Comparison
-    normalized_eeg_proj_1 = tf.keras.layers.LayerNormalization()(eeg_proj_1)
-    normalized_env_proj_list = [tf.keras.layers.LayerNormalization()(env_proj) for env_proj in env_proj_list]
-    # cos = [tf.keras.layers.Dot(1, normalize=True)([eeg_proj_1, env_proj_list]) for env_proj_list in env_proj_list]
-    cos = [tf.keras.layers.Dot(1, normalize=True)([normalized_eeg_proj_1, env_proj]) for env_proj in normalized_env_proj_list]
+    # normalized_eeg_proj_1 = tf.keras.layers.LayerNormalization()(eeg_proj_1)
+    # normalized_env_proj_list = [tf.keras.layers.LayerNormalization()(env_proj) for env_proj in env_proj_list]
+    cos = [tf.keras.layers.Dot(1, normalize=True)([eeg_proj_1, env_proj_list]) for env_proj_list in env_proj_list]
+    # cos = [tf.keras.layers.Dot(1, normalize=True)([normalized_eeg_proj_1, env_proj]) for env_proj in normalized_env_proj_list]
 
 
     linear_proj_sim = tf.keras.layers.Dense(1, activation="linear")

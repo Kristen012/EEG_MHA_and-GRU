@@ -38,9 +38,20 @@ Note that it is possible to use the same preprocessed (and split) dataset for bo
 
 ## Model performance
 - validation acc
-| baseline | MHA+GRU | MHA+GRU(with additional batch normalization) | MHA+GRU(with addtional mel preprocess)
-| -------- | -------- | -------- |
-| 58% | 61.9% | 61.6% | 61.9% |
+<table>
+  <tr>
+    <td>baseline</td>
+    <td>MHA+GRU</td>
+    <td>MHA+GRU(with additional batch normalization)</td>
+    <td>MHA+GRU(with addtional mel preprocess)</td>
+  </tr>
+  <tr>
+    <td>58%</td>
+    <td>61.9%</td>
+    <td>61.6%</td>
+    <td>61.ㄞ%</td>
+  </tr>
+</table>
 ## Model output examples
 After the training process complete, you will get folowing files under the `results_dilated_convolutional_model_{number_mismatch}_MM_{decision_window_length}_s_{stimulus_features}` folder.
 
