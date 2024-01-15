@@ -1,6 +1,6 @@
 Auditory EEG Challenge - ICASSP 2024
 ================================
-Our model use Multi-Head Self Attention and Gated Recurrent Unit for baseline model improving (just a little bit...)
+This is the codebase for the [2024 ICASSP Auditory EEG challenge](https://exporl.github.io/auditory-eeg-challenge-2024/).
 ## General Setup
 ### 1. Clone this repository and install the [requirements.txt](requirements.txt)
 ```bash
