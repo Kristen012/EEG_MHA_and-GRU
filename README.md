@@ -63,6 +63,6 @@ After the training process complete, you will get folowing files under the `resu
 
 1. eval_{number_mismatch}_{decision_window_length}_s.json
 2. training_log_{number_mismatch}_{decision_window_length}
-3. model_{number_mismatch}_MM_{decision_window_length}_s_{decision_window_length}.h5
+3. model_{number_mismatch}\_MM_{decision_window_length}\_s_{decision_window_length}.h5
 
 - Refer to [results_dilated_convolutional_model_4_MM_5_s_dim28_mel](results_dilated_convolutional_model_4_MM_5_s_dim28_mel)
