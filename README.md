@@ -36,6 +36,11 @@ It is possible to adapt the preprocessing steps in `sparrKULee.py` to your own n
 
 Note that it is possible to use the same preprocessed (and split) dataset for both task 1 and task 2, but it is not required.
 
+### 3. Training
+```bash
+python training.py
+```
+
 ## Model performance
 - validation acc
 <table>
@@ -49,9 +54,10 @@ Note that it is possible to use the same preprocessed (and split) dataset for bo
     <td>58%</td>
     <td>61.9%</td>
     <td>61.6%</td>
-    <td>61.ㄞ%</td>
+    <td>61.9%</td>
   </tr>
 </table>
+
 ## Model output examples
 After the training process complete, you will get folowing files under the `results_dilated_convolutional_model_{number_mismatch}_MM_{decision_window_length}_s_{stimulus_features}` folder.
 
